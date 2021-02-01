@@ -50,6 +50,8 @@ class DQN:
             models = os.listdir(models_dir)
             models.remove(".keep")  # remove ".keep" file from list
 
+            if not models:
+                return
             newest_model = models_dir / sorted(models)[-1]
             log.info(f"Loaded model from : {newest_model}")
             return keras.models.load_model(newest_model)
@@ -61,20 +63,24 @@ class DQN:
         """
         if from_saved is True:
             model = self.get_newest_model()
-        elif from_saved:
+            if model:
+                return model
+        elif isinstance(str, from_saved) or isinstance(Path, from_saved):
             model = self.get_newest_model(from_saved)
-        else:
-            model = Sequential()
+            if model:
+                return model
 
-            # TODO get a not "None" shape out of self.env.observation_space
-            state_shape = self.env.observation_space['graph'].shape[0]
-            model.add(Dense(512, input_dim=state_shape, activation="elu"))
-            model.add(Dense(1024, activation="elu"))
+        model = Sequential()
 
-            # 20 x 20 x 3 output, location dependent
-            model.add(Dense(1200))  # TODO dynamic output based on output size
-            model.compile(loss="mse",
-                          optimizer=self.optimizer)
+        # TODO get a not "None" shape out of self.env.observation_space
+        state_shape = self.env.observation_space['graph'].shape[0]
+        model.add(Dense(512, input_dim=state_shape, activation="elu"))
+        model.add(Dense(1024, activation="elu"))
+
+        # 20 x 20 x 3 output, location dependent
+        model.add(Dense(1200))  # TODO dynamic output based on output size
+        model.compile(loss="mse",
+                      optimizer=self.optimizer)
         return model
 
     @staticmethod
